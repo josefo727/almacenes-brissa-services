@@ -2,7 +2,7 @@ import { ServiceContext } from '@vtex/api'
 import { json } from 'co-body'
 
 import { Clients } from '../clients'
-import { syncDocumentToSubAccounts } from '../services/masterDataSync'
+import { syncDocument, syncDocumentsInBatch } from '../services/masterDataSync'
 import { getAppSettings } from '../utils/credentials'
 
 export async function handleCreateTrigger(ctx: ServiceContext<Clients>, next: () => Promise<any>) {
@@ -12,7 +12,7 @@ export async function handleCreateTrigger(ctx: ServiceContext<Clients>, next: ()
 
   vtex.logger.info(`[SYNC] Received create trigger for document ${documentId}`)
 
-  await syncDocumentToSubAccounts(
+  await syncDocument(
     clients,
     vtex,
     documentId,
@@ -35,7 +35,7 @@ export async function handleUpdateTrigger(ctx: ServiceContext<Clients>, next: ()
 
   vtex.logger.info(`[SYNC] Received update trigger for document ${documentId}`)
 
-  await syncDocumentToSubAccounts(
+  await syncDocument(
     clients,
     vtex,
     documentId,
@@ -60,49 +60,35 @@ export async function handleManualSync(ctx: ServiceContext<Clients>, next: () =>
 
   setImmediate(async () => {
     try {
-      const scrollResponse: any = await clients.masterData.scroll({
-        dataEntity: 'CL',
-        fields: appSettings.syncFields,
-        where: `(createdIn > ${syncDate}) OR (updatedIn > ${syncDate})`,
-        size: 1000,
-      })
+      const documents = []
+      let token = null
+      let hasMoreData = true
 
-      for (const document of scrollResponse.data) {
-        await syncDocumentToSubAccounts(
-          clients,
-          vtex,
-          document.id,
-          appSettings.subAccounts,
-          appSettings.syncFields,
-          appSettings.appKey,
-          appSettings.appToken
-        )
-      }
-
-      let token = scrollResponse.mdToken
-
-      while (token) {
-        const nextScrollResponse: any = await clients.masterData.scroll({
+      do {
+        const scrollResponse: any = await clients.masterData.scroll({
           dataEntity: 'CL',
           fields: appSettings.syncFields,
-          mdToken: token,
+          where: `(createdIn > ${syncDate}) OR (updatedIn > ${syncDate})`,
           size: 1000,
+          mdToken: token,
         })
 
-        for (const document of nextScrollResponse.data) {
-          await syncDocumentToSubAccounts(
-            clients,
-            vtex,
-            document.id,
-            appSettings.subAccounts,
-            appSettings.syncFields,
-            appSettings.appKey,
-            appSettings.appToken
-          )
-        }
+        documents.push(...scrollResponse.data)
+        token = scrollResponse.mdToken
 
-        token = nextScrollResponse.mdToken
-      }
+        if (!token) {
+          hasMoreData = false
+        }
+      } while (hasMoreData)
+
+      await syncDocumentsInBatch(
+        clients,
+        vtex,
+        documents,
+        appSettings.subAccounts,
+        appSettings.appKey,
+        appSettings.appToken
+      )
 
       vtex.logger.info(`[SYNC] Manual sync process finished for date ${syncDate}`)
     } catch (error) {
