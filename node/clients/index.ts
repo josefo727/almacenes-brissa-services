@@ -1,4 +1,4 @@
-import { IOClients, IOContext } from '@vtex/api'
+import { IOClients, IOContext, Events } from '@vtex/api'
 
 import MasterData from './masterData'
 
@@ -6,6 +6,10 @@ import MasterData from './masterData'
 export class Clients extends IOClients {
   public get masterData() {
     return this.getOrSet('masterData', MasterData)
+  }
+
+  public get events() {
+    return this.getOrSet('events', Events)
   }
 
   public getMasterDataForAccount(
