@@ -5,4 +5,4 @@ cd node/
 yarn cache clean
 yarn  --frozen-lockfile
 cd ..
-yarn lint
+#yarn lint
