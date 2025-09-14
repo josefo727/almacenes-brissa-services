@@ -22,8 +22,10 @@ export async function syncDocumentsInBatch(
 
     for (let i = 0; i < documents.length; i += UPLOAD_CHUNK_SIZE) {
       const chunk = documents.slice(i, i + UPLOAD_CHUNK_SIZE)
-      const promises = chunk.map((document) => {
-        return masterData.updateOrCreate('CL', document).catch((error) => {
+      const promises = chunk.map(async (document) => {
+        try {
+          return await masterData.updateOrCreate('CL', document)
+        } catch (error) {
           const documentId = document.id || document.document || 'unknown'
           const errorMessage = error.response
             ? JSON.stringify(error.response.data)
@@ -32,7 +34,7 @@ export async function syncDocumentsInBatch(
             message: `[SYNC] Failed to sync document ${documentId} to account ${account}`,
             error: errorMessage,
           })
-        })
+        }
       })
 
       await Promise.all(promises)
@@ -44,7 +46,7 @@ export async function syncDocumentsInBatch(
   }
 }
 
-export async function syncDocument( 
+export async function syncDocument(
   clients: Clients,
   context: IOContext,
   documentId: string,
