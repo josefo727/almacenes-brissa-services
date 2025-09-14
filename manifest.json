@@ -1,7 +1,7 @@
 {
   "name": "almacenes-brissa-services",
   "vendor": "almacenesbrissa",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "title": "Almacenes Brissa Services",
   "description": "Backend and masterdara services",
   "mustUpdateAt": "2025-09-09",
