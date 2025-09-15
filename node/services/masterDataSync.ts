@@ -3,6 +3,37 @@ import { Clients } from '../clients'
 
 const UPLOAD_CHUNK_SIZE = 30
 const UPLOAD_DELAY_MS = 1000
+const MAX_RETRIES = 5
+const INITIAL_RETRY_DELAY_MS = 2000
+
+async function requestWithRetry(
+  context: IOContext,
+  request: () => Promise<any>,
+  retries = MAX_RETRIES
+) {
+  let delay = INITIAL_RETRY_DELAY_MS
+  for (let i = 0; i < retries; i++) {
+    try {
+      return await request()
+    } catch (error) {
+      if (
+        error.response &&
+        (error.response.status === 408 ||
+          error.response.status === 429 ||
+          error.response.status >= 500)
+      ) {
+        context.logger.warn(
+          `[SYNC] Attempt ${i + 1} failed. Status: ${error.response.status}. Retrying in ${delay / 1000}s...`
+        )
+        await new Promise((resolve) => setTimeout(resolve, delay))
+        delay *= 2
+      } else {
+        throw error
+      }
+    }
+  }
+  throw new Error(`[SYNC] Request failed after ${retries} attempts.`)
+}
 
 export async function syncDocumentsInBatch(
   clients: Clients,
@@ -24,7 +55,7 @@ export async function syncDocumentsInBatch(
       const chunk = documents.slice(i, i + UPLOAD_CHUNK_SIZE)
       const promises = chunk.map(async (document) => {
         try {
-          return await masterData.updateOrCreate('CL', document)
+          return await requestWithRetry(context, () => masterData.updateOrCreate('CL', document))
         } catch (error) {
           const documentId = document.id || document.document || 'unknown'
           const errorMessage = error.response

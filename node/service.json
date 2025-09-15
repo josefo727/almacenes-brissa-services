@@ -5,6 +5,12 @@
   "minReplicas": 2,
   "maxReplicas": 4,
   "workers": 1,
+  "events": {
+    "sync-cl-manual-next": {
+      "sender": "almacenesbrissa.almacenes-brissa-services",
+      "keys": ["sync-cl-manual-next"]
+    }
+  },
   "routes": {
     "sync-cl-created": {
       "path": "/_v/sync/cl/created",
@@ -14,9 +20,10 @@
       "path": "/_v/sync/cl/updated",
       "public": true
     },
-    "sync-cl-manual": {
+    "sync-cl": {
       "path": "/_v/sync/cl/manual",
-      "public": true
+      "public": true,
+      "method": "POST"
     }
   }
 }

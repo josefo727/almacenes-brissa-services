@@ -2,7 +2,7 @@ import type { ClientsConfig } from '@vtex/api'
 import { LRUCache, method, Service } from '@vtex/api'
 
 import { Clients } from './clients'
-import { handleCreateTrigger, handleUpdateTrigger, handleManualSync } from './middlewares/sync'
+import { handleCreateTrigger, handleUpdateTrigger, handleManualSync, handleManualSyncNext } from './middlewares/sync'
 
 const TIMEOUT_MS = 30000
 
@@ -32,8 +32,11 @@ export default new Service({
     "sync-cl-updated": method({
       PUT: [handleUpdateTrigger],
     }),
-    "sync-cl-manual": method({
+    "sync-cl": method({
       POST: [handleManualSync],
     }),
+  },
+  events: {
+    "sync-cl-manual-next": handleManualSyncNext,
   },
 })
