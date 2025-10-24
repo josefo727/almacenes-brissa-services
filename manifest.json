@@ -47,7 +47,21 @@
     {
       "name": "outbound-access",
       "attrs": {
-        "host": "*.vtexcommercestable.com.br",
+        "host": "{{account}}.vtexcommercestable.com.br",
+        "path": "/api/*"
+      }
+    },
+    {
+      "name": "outbound-access",
+      "attrs": {
+        "host": "kioskoseventos.vtexcommercestable.com.br",
+        "path": "/api/*"
+      }
+    },
+    {
+      "name": "outbound-access",
+      "attrs": {
+        "host": "kioskotiendas.vtexcommercestable.com.br",
         "path": "/api/*"
       }
     }

@@ -1,6 +1,6 @@
 import { IOClients, IOContext, Events } from '@vtex/api'
 
-import MasterData from './masterData'
+import MasterData, { MasterDataForAccount } from './masterData'
 
 // Extend the default IOClients implementation with our own custom clients.
 export class Clients extends IOClients {
@@ -18,15 +18,6 @@ export class Clients extends IOClients {
     appKey: string,
     appToken: string
   ) {
-    return new MasterData(context, {
-      headers: {
-        'X-Vtex-Use-Https': 'true',
-        'Proxy-Authorization': context.authToken,
-        VtexIdclientAutCookie: context.authToken,
-        'x-vtex-api-appKey': appKey,
-        'x-vtex-api-appToken': appToken,
-      },
-      baseURL: `https://${account}.vtexcommercestable.com.br/api/dataentities`,
-    })
+    return new MasterDataForAccount(context, account, appKey, appToken)
   }
 }
